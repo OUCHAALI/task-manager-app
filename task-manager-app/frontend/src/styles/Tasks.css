@@ -1,0 +1,25 @@
+.tasks-container {
+    padding: 40px 20px;
+}
+
+.tasks-container h2 {
+    margin-bottom: 30px;
+    color: #282c34;
+    font-size: 1.8rem;
+}
+
+.error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+}
+
+.no-tasks {
+    text-align: center;
+    color: #999;
+    padding: 40px;
+    font-size: 1.1rem;
+}

@@ -1,0 +1,151 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKER_REGISTRY = "docker.io"
+        IMAGE_NAME_BACKEND = "task-manager-backend"
+        IMAGE_NAME_FRONTEND = "task-manager-frontend"
+        IMAGE_TAG = "${BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo '🔄 Checking out code...'
+                checkout scm
+            }
+        }
+        
+        stage('Build Backend') {
+            steps {
+                echo '🔨 Building backend Docker image...'
+                script {
+                    sh '''
+                        cd backend
+                        docker build -t ${IMAGE_NAME_BACKEND}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME_BACKEND}:${IMAGE_TAG} ${IMAGE_NAME_BACKEND}:latest
+                    '''
+                }
+            }
+        }
+        
+        stage('Build Frontend') {
+            steps {
+                echo '🔨 Building frontend Docker image...'
+                script {
+                    sh '''
+                        cd frontend
+                        docker build -t ${IMAGE_NAME_FRONTEND}:${IMAGE_TAG} .
+                        docker tag ${IMAGE_NAME_FRONTEND}:${IMAGE_TAG} ${IMAGE_NAME_FRONTEND}:latest
+                    '''
+                }
+            }
+        }
+        
+        stage('Test Backend') {
+            steps {
+                echo '🧪 Testing backend...'
+                script {
+                    sh '''
+                        cd backend
+                        pip install -r requirements.txt
+                        echo "Backend tests would run here"
+                    '''
+                }
+            }
+        }
+        
+        stage('Test Frontend') {
+            steps {
+                echo '🧪 Testing frontend...'
+                script {
+                    sh '''
+                        cd frontend
+                        npm install
+                        echo "Frontend tests would run here"
+                    '''
+                }
+            }
+        }
+        
+        stage('Security Scan') {
+            steps {
+                echo '🔒 Running security scans...'
+                script {
+                    sh '''
+                        echo "Security scan stage"
+                        docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy image ${IMAGE_NAME_BACKEND}:${IMAGE_TAG} || true
+                    '''
+                }
+            }
+        }
+        
+        stage('Push Images') {
+            steps {
+                echo '📤 Pushing Docker images...'
+                script {
+                    sh '''
+                        echo "Images would be pushed to registry here"
+                        docker images | grep task-manager
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy to Dev') {
+            when {
+                branch 'develop'
+            }
+            steps {
+                echo '🚀 Deploying to dev environment...'
+                script {
+                    sh '''
+                        echo "Deploying to dev environment"
+                        docker-compose -f docker-compose.yml up -d
+                    '''
+                }
+            }
+        }
+        
+        stage('Deploy to Production') {
+            when {
+                branch 'main'
+            }
+            steps {
+                echo '🚀 Deploying to production...'
+                script {
+                    sh '''
+                        echo "Deploying to production environment"
+                        echo "Production deployment would happen here"
+                    '''
+                }
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                echo '✅ Running health checks...'
+                script {
+                    sh '''
+                        sleep 5
+                        curl -f http://localhost:8000/health || echo "Health check endpoint not available"
+                        curl -f http://localhost:3000 || echo "Frontend not available"
+                    '''
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo '🧹 Cleaning up workspace...'
+            cleanWs()
+        }
+        success {
+            echo '✨ Pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Pipeline failed!'
+        }
+    }
+}

@@ -1,0 +1,13 @@
+.task-list {
+    list-style: none;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+@media (max-width: 768px) {
+    .task-list {
+        gap: 10px;
+    }
+}
